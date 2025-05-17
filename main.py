@@ -67,7 +67,7 @@ while True:
                     if not token_id or not str(token_id).strip():
                         continue
                     logging.info(f"Fetching prices for token_id {token_id} in market {slug}...")
-                    prices_params = {"market": token_id, "interval": "max", "fidelity": "1"}
+                    prices_params = {"market": token_id, "interval": "max", "fidelity": "15"}
                     prices_resp = requests.get(CLOB_PRICES_HISTORY_URL, params=prices_params)
                     prices_resp.raise_for_status()
                     prices_data = prices_resp.json()
