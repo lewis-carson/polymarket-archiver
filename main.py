@@ -72,10 +72,15 @@ while True:
                     prices_resp.raise_for_status()
                     prices_data = prices_resp.json()
                     if prices_data.get("history"):
+                        outcome = token.get("outcome")
                         safe_slug = str(slug).replace('/', '_').replace(' ', '_')
                         history_path = os.path.join(HISTORY_DIR, f"{safe_slug}_{token_id}.json")
+                        # Save both price history and outcome
+                        save_data = dict(prices_data)
+                        if outcome is not None:
+                            save_data["outcome"] = outcome
                         with open(history_path, "w") as hist_f:
-                            json.dump(prices_data, hist_f, ensure_ascii=False, indent=2)
+                            json.dump(save_data, hist_f, ensure_ascii=False, indent=2)
                         logging.info(f"Wrote price history to {history_path}")
     # Handle cursor-based pagination
     next_cursor = data.get("next_cursor")
