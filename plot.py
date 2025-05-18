@@ -48,21 +48,16 @@ for curve, times in zip(all_curves, all_times):
 
 plt.figure(figsize=(12, 6))
 for curve, times in zip(padded_curves, padded_times):
-    # Compute x axis as time to end in days (or hours if <2 days)
-    valid = ~np.isnan(times)
-    if not np.any(valid):
+    # Only use the valid (unpadded) region for both arrays
+    valid_idx = np.where(~np.isnan(times))[0]
+    if len(valid_idx) == 0:
         continue
-    t_end = times[valid][-1]
-    t_x = (times[valid] - t_end) / 1000  # ms to seconds
-    if abs(t_x[0]) > 2*24*3600:
-        t_x = t_x / (24*3600)  # days
-        x_label = "Days before end"
-    else:
-        t_x = t_x / 3600  # hours
-        x_label = "Hours before end"
-    plt.plot(t_x, curve[valid], alpha=0.5)
-plt.title(f"Aligned Price History for {len(padded_curves)} Markets (end-aligned, x = time before end)")
-plt.xlabel(x_label + " (0 = end)")
+    t_end = times[valid_idx[-1]]
+    t_x = times[valid_idx] - t_end  # normalise: T minus end
+    curve_valid = curve[valid_idx]
+    plt.plot(t_x, curve_valid, alpha=0.5)
+plt.title(f"Aligned Price History for {len(padded_curves)} Markets (end-aligned, x = T minus ms)")
+plt.xlabel("T minus ms (0 = end)")
 plt.ylabel("Price")
 plt.tight_layout()
 plt.show()
