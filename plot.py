@@ -47,8 +47,7 @@ for curve, times in zip(all_curves, all_times):
     padded_times.append(padded_time)
 
 plt.figure(figsize=(12, 6))
-for curve, times in zip(padded_curves, padded_times):
-    # Only use the valid (unpadded) region for both arrays
+for chosen_file, curve, times in zip(chosen_files, padded_curves, padded_times):
     valid_idx = np.where(~np.isnan(times))[0]
     if len(valid_idx) == 0:
         continue
@@ -56,6 +55,13 @@ for curve, times in zip(padded_curves, padded_times):
     t_x = times[valid_idx] - t_end  # normalise: T minus end
     curve_valid = curve[valid_idx]
     plt.plot(t_x, curve_valid, alpha=0.5)
+    # Plot outcome dot if available
+    with open(os.path.join(HIST_DIR, chosen_file), 'r') as f:
+        data = json.load(f)
+    outcome = data.get("outcome")
+    if outcome is not None:
+        color = 'green' if str(outcome).lower() == 'yes' else 'red'
+        plt.scatter([0], [curve_valid[-1]], color=color, s=40, zorder=10)
 plt.title(f"Aligned Price History for {len(padded_curves)} Markets (end-aligned, x = T minus ms)")
 plt.xlabel("T minus ms (0 = end)")
 plt.ylabel("Price")

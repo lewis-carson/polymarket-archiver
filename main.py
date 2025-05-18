@@ -55,6 +55,9 @@ while True:
                 end_date = datetime.fromisoformat(str(end_date_iso).replace('Z', '+00:00'))
             except Exception:
                 continue
+            # Only process markets whose end date has already happened
+            if end_date > datetime.now(timezone.utc):
+                continue
             if end_date < ONE_MONTH_AGO:
                 continue
 
