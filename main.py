@@ -58,7 +58,7 @@ while True:
             # Only process markets whose end date has already happened
             if end_date > datetime.now(timezone.utc):
                 continue
-            if end_date < ONE_MONTH_AGO:
+            if end_date < ONE_YEAR_AGO:
                 continue
 
             slug = market.get("market_slug") or market.get("slug")
