@@ -24,6 +24,9 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
+# Track already downloaded files to allow resuming
+existing_files = set(os.listdir(HISTORY_DIR))
+
 # Use cursor-based pagination for /markets endpoint
 next_cursor = ""
 
@@ -58,16 +61,23 @@ while True:
             # Only process markets whose end date has already happened
             if end_date > datetime.now(timezone.utc):
                 continue
-            if end_date < ONE_YEAR_AGO:
+            if end_date < ONE_MONTH_AGO:
                 continue
 
             slug = market.get("market_slug") or market.get("slug")
             tokens = market.get("tokens")
+            
             if slug and tokens:
                 logging.info(f"Processing market: {slug}")
                 for token in tokens:
                     token_id = token.get("token_id")
                     if not token_id or not str(token_id).strip():
+                        continue
+                    safe_slug = str(slug).replace('/', '_').replace(' ', '_')
+                    history_filename = f"{safe_slug}_{token_id}.json"
+                    history_path = os.path.join(HISTORY_DIR, history_filename)
+                    if history_filename in existing_files:
+                        logging.info(f"Already downloaded: {history_filename}, skipping.")
                         continue
                     logging.info(f"Fetching prices for token_id {token_id} in market {slug}...")
                     prices_params = {"market": token_id, "interval": "max", "fidelity": "10"}
@@ -76,8 +86,6 @@ while True:
                     prices_data = prices_resp.json()
                     if prices_data.get("history"):
                         outcome = token.get("outcome")
-                        safe_slug = str(slug).replace('/', '_').replace(' ', '_')
-                        history_path = os.path.join(HISTORY_DIR, f"{safe_slug}_{token_id}.json")
                         # Save both price history and outcome
                         save_data = dict(prices_data)
                         if outcome is not None:
@@ -85,6 +93,7 @@ while True:
                         with open(history_path, "w") as hist_f:
                             json.dump(save_data, hist_f, ensure_ascii=False, indent=2)
                         logging.info(f"Wrote price history to {history_path}")
+                        existing_files.add(history_filename)
     # Handle cursor-based pagination
     next_cursor = data.get("next_cursor")
     if not next_cursor or next_cursor == "LTE=":
